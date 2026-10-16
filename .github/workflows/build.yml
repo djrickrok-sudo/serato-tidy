@@ -1,0 +1,44 @@
+name: Build Serato Tidy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Serato Tidy
+        run: |
+          pyinstaller --noconfirm --clean --windowed \
+            --name "Serato Tidy" \
+            --collect-submodules mutagen \
+            serato_tidy_gui.py
+
+      - name: Create Mac ZIP
+        run: |
+          cd dist
+          ditto -c -k --sequesterRsrc --keepParent \
+            "Serato Tidy.app" "Serato-Tidy-Mac.zip"
+
+      - name: Upload Mac app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Serato-Tidy-Mac
+          path: dist/Serato-Tidy-Mac.zip
